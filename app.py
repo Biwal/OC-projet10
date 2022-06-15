@@ -20,6 +20,8 @@ CONFIG = DefaultConfig()
 
 # Create adapter.
 # See https://aka.ms/about-bot-adapter to learn more about how bots work.
+# SETTINGS = BotFrameworkAdapterSettings("","")
+
 SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
 ADAPTER = BotFrameworkAdapter(SETTINGS)
 
@@ -77,9 +79,8 @@ async def messages(req: Request) -> Response:
     except Exception as exception:
         raise exception
 
-def init_func(argv):
+async def init_func(argv):
     APP = web.Application(middlewares=[aiohttp_error_middleware])
-    # APP = web.Application()
     APP.router.add_post("/api/messages", messages)
     return APP
 

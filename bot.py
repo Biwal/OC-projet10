@@ -1,15 +1,28 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-from botbuilder.core import ActivityHandler, TurnContext
+from unittest import result
+from botbuilder.core import ActivityHandler, TurnContext, RecognizerResult, MessageFactory
 from botbuilder.schema import ChannelAccount
+from botbuilder.ai.luis import LuisApplication, LuisPredictionOptions, LuisRecognizer
 
 
 class MyBot(ActivityHandler):
+    def __init__(self) -> None:
+        luis_app = LuisApplication("28f58886-4988-435b-8749-032ad1e3009c","47cd37fc73fa430481dcfd3f48a39d76","https://botluisocprojet10.cognitiveservices.azure.com/")
+        luis_option = LuisPredictionOptions(include_all_intents=True, include_instance_data=True)
+        self.LuisReg = LuisRecognizer(luis_app, luis_option, True)
     # See https://aka.ms/about-bot-activity-message to learn more about the message and other activity types.
 
     async def on_message_activity(self, turn_context: TurnContext):
-        await turn_context.send_activity(f"You said '{ turn_context.activity.text }'")
+        # await turn_context.send_activity(f"You said '{ turn_context.activity.text }'")
+        luis_result = await self.LuisReg.recognize(turn_context)
+        intent = LuisRecognizer.top_intent(luis_result)
+        await turn_context.send_activity(f"Top Intent : {intent}")
+        result = luis_result.properties["luisResult"]
+        await turn_context.send_activity(f" Luis Result {result.entities[0]}")
+        # await turn_context.send_activity(f" Luis Resul {result.entities}")
+        # await turn_context.send_activity(result)
 
     async def on_members_added_activity(
         self,
