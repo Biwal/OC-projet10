@@ -1,68 +1,86 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License.
 
 from unittest import result
-from botbuilder.core import ActivityHandler, TurnContext, RecognizerResult, MessageFactory, ConversationState
-from botbuilder.schema import ChannelAccount
+from botbuilder.core import ActivityHandler, TurnContext, MessageFactory, ConversationState
 from botbuilder.ai.luis import LuisApplication, LuisPredictionOptions, LuisRecognizer
 from botbuilder.dialogs import DialogSet,WaterfallDialog,WaterfallStepContext
-from botbuilder.dialogs.prompts import TextPrompt,NumberPrompt,PromptOptions,PromptValidatorContext
-
+from botbuilder.dialogs.prompts import TextPrompt,ConfirmPrompt,PromptOptions,PromptValidatorContext
+from typing import List
+from config import DefaultConfig
 
 class MyBot(ActivityHandler):
     def __init__(self, conversation: ConversationState) -> None:
-        luis_app = LuisApplication("28f58886-4988-435b-8749-032ad1e3009c","47cd37fc73fa430481dcfd3f48a39d76","https://botluisocprojet10.cognitiveservices.azure.com/")
+        CONFIG = DefaultConfig()
+        
+        luis_app = LuisApplication(CONFIG.LUIS_ID, CONFIG.LUIS_KEY, CONFIG.BOT_URL)
         luis_option = LuisPredictionOptions(include_all_intents=True, include_instance_data=True)
         self.LuisReg = LuisRecognizer(luis_app, luis_option, True)
-    # See https://aka.ms/about-bot-activity-message to learn more about the message and other activity types.
-        self.con_statea = conversation
-        self.state_prop = self.con_statea.create_property("dialog_set")
+        self.con_state = conversation
+        self.state_prop = self.con_state.create_property("dialog_set")
         self.dialog_set = DialogSet(self.state_prop)
-        self.dialog_set.add(TextPrompt("text_prompt"))
-        self.dialog_set.add(NumberPrompt("number_prompt",self.IsValidMobileNumber))
+        self.dialog_set.add(TextPrompt("airports_prompt", self.are_airports_valids))
+        self.dialog_set.add(TextPrompt("dates_prompt", self.are_dates_valids))
+        self.dialog_set.add(TextPrompt('budget_prompt', self.is_budget_valid))
+        self.dialog_set.add(ConfirmPrompt('validation_prompt', self.is_validated))
         
-        self.dialog_set.add(WaterfallDialog("main_dialog",[self.introduce, self.airports]))
-
-
-
-    async def introduce(self, waterfall_step : WaterfallStepContext):
         
-        return await waterfall_step.prompt("text_prompt",PromptOptions(prompt=MessageFactory.text(f"Where do you want to move sir?")))
+        self.dialog_set.add(WaterfallDialog("main_dialog",[self.airports, self.dates, self.budget, self.validation, self.completed]))
 
-    async def airports(self, waterfall_step :WaterfallStepContext):
-        mobile = waterfall_step._turn_context.activity.text
-        waterfall_step.values["mobile"] = mobile
-        luis_result = await self.LuisReg.recognize(waterfall_step._turn_context)
-        intent = LuisRecognizer.top_intent(luis_result)
-        # await waterfall_step.send_activity(f"Top Intent : {intent}")
-        result = luis_result.properties["luisResult"]
-        for e in result.entities:
-            await waterfall_step._turn_context.send_activity(f"{e}")
+
+    async def airports(self, waterfall_step : WaterfallStepContext):
+        await waterfall_step._turn_context.send_activity(f"Welcome to the flight booking bot. I was built to help you to book your round-trip ticket.\n I will ask you some informations to complete your request then i can proceed. I hope our interraction will going well ! ")
+        return await waterfall_step.prompt('airports_prompt', PromptOptions(prompt=MessageFactory.text(f"First question; Where are the origin and the destination of your vacations? ")))
         
-        return await waterfall_step.prompt("text_prompt",PromptOptions(prompt=MessageFactory.text(f" Luis Result {result.entities[0].type}")))
-        # waterfall_step.send_activity()
 
-
-    async def IsValidMobileNumber(self,prompt_valid:PromptValidatorContext):
-        if(prompt_valid.recognized.succeeded is False):
-            await prompt_valid.context.send_activity("Hey please enter the number")
-            return False
-        else:
-            value = str(prompt_valid.recognized.value)
-            if len(value) < 3:
-                await prompt_valid.context.send_activity("Please enter the valid mobile number")
-                return False
-        return True
+    async def are_airports_valids(self, prompt_valid:PromptValidatorContext):
+        valid_entities = ['or_city', 'dst_city']    
+        error_message="I'm sorry I don't understand the departure and/or the arrival city. Could you please re-write your informations?"
+        return await self._validator(prompt_valid, valid_entities, error_message)
     
+    async def dates(self, waterfall_step: WaterfallStepContext):
+        entities_to_save = ['or_city', 'dst_city'] 
+        await self._save_entities_values(waterfall_step, entities_to_save)
+        return await waterfall_step.prompt('dates_prompt', PromptOptions(prompt=MessageFactory.text(f"Great ! Now please indicate your dates filghts .")) )
+    
+    async def are_dates_valids(self, prompt_valid:PromptValidatorContext):
+        valid_entities = ['str_date', 'end_date']
+        error_message= "I'm sorry I don't understad your preferences for the dates flight. Could you please reformulate your sentence?"
+        return await self._validator(prompt_valid, valid_entities, error_message)
+    
+    async def budget(self, waterfall_step:WaterfallStepContext):
+        entities_to_save = ['str_date', 'end_date'] 
+        await self._save_entities_values(waterfall_step, entities_to_save)
+        return await waterfall_step.prompt('budget_prompt', PromptOptions(prompt=MessageFactory.text(f'Awesome! I only need one more information . Can you tell me your maximum budget?')))
         
-    async def Completed(self,waterfall_step:WaterfallStepContext):
-        email = waterfall_step._turn_context.activity.text
-        waterfall_step.values["email"] = email
-        name = waterfall_step.values["name"]
-        mobile = waterfall_step.values["mobile"]
-        mail = waterfall_step.values["email"] 
-        profileinfo = f"name : {name} , Email : {mail} , mobile {mobile}"
-        await waterfall_step._turn_context.send_activity(profileinfo)
+    async def is_budget_valid(self, prompt_valid:PromptValidatorContext):
+        valid_entities = ['budget']    
+        error_message="I'm sorry I don't understand your budget for this travel. Could you type it again?"
+        return await self._validator(prompt_valid, valid_entities, error_message)     
+    
+    async def validation(self, waterfall_step:WaterfallStepContext):
+        entities_to_save = ['budget']
+        await self._save_entities_values(waterfall_step, entities_to_save)
+        
+        or_city = waterfall_step.values['or_city']
+        dst_city = waterfall_step.values['dst_city']
+        str_date = waterfall_step.values['str_date']
+        end_date = waterfall_step.values['end_date']
+        budget = waterfall_step.values['budget']
+        
+        message=f"Ok, let me summarize ! You want to book a plane from '{or_city}' to '{dst_city}', leaving '{str_date}' and coming back '{end_date}' with a budget of '{budget}'. Do you confirm these data? "
+        # message = f'or_city : {or_city} ; dst_city : {dst_city} ; departure: {str_date} ; return : {end_date} ; budget : {budget}'
+        return await waterfall_step.prompt('validation_prompt', PromptOptions(prompt=MessageFactory.text(message)))
+    
+    async def is_validated(self, prompt_valid: PromptValidatorContext):
+        if prompt_valid.recognized.value == False:
+            await prompt_valid.context.send_activity('Why did you say no :( ? Please reload me to correctly book your plane !')
+            return False
+        if prompt_valid.recognized.value == None:
+            await prompt_valid.context.send_activity('Your entry is not recognized. Please respond with "yes" or "no"')
+            return False
+        return True
+        
+    async def completed(self,waterfall_step:WaterfallStepContext):
+        await waterfall_step._turn_context.send_activity('Congratulations, your flights are now booked ! Type anything to book another seat on a plane.')
         return await waterfall_step.end_dialog()
         
     async def on_turn(self,turn_context:TurnContext):
@@ -73,4 +91,27 @@ class MyBot(ActivityHandler):
         else:
             await dialog_context.begin_dialog("main_dialog")
         
-        await self.con_statea.save_changes(turn_context)
+        await self.con_state.save_changes(turn_context)
+        
+    def _get_entity_value(self, entities, key):
+        for entity in  entities:
+            if entity.type == key:
+                return entity.entity
+            
+    async def _validator(self, prompt_valid:PromptValidatorContext, valid_entities: List[str], error_message:str):
+        luis_result = await self.LuisReg.recognize(prompt_valid.context)
+        result = luis_result.properties["luisResult"]
+        entities_type = [entity.type for entity in result.entities]
+            
+        if not all([valid_entity in entities_type for valid_entity in valid_entities]):
+            await prompt_valid.context.send_activity(error_message)
+            return False
+        return True
+
+    async def _save_entities_values(self, waterfall_step:WaterfallStepContext, entities_to_save:List[str]):
+        luis_result = await self.LuisReg.recognize(waterfall_step._turn_context)
+        result = luis_result.properties["luisResult"]
+        entities = result.entities
+        for entity in entities_to_save:
+            waterfall_step.values[entity]= self._get_entity_value(entities, entity)
+        

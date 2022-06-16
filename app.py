@@ -18,16 +18,10 @@ from bot import MyBot
 from config import DefaultConfig
 
 CONFIG = DefaultConfig()
-
-# Create adapter.
-# See https://aka.ms/about-bot-adapter to learn more about how bots work.
 # SETTINGS = BotFrameworkAdapterSettings("","")
-
 SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
 ADAPTER = BotFrameworkAdapter(SETTINGS)
 
-
-# Catch-all for errors.
 async def on_error(context: TurnContext, error: Exception):
     # This check writes out errors to console log .vs. app insights.
     # NOTE: In production environment, you should consider logging this to Azure
@@ -54,17 +48,12 @@ async def on_error(context: TurnContext, error: Exception):
         # Send a trace activity, which will be displayed in Bot Framework Emulator
         await context.send_activity(trace_activity)
 
-
 ADAPTER.on_turn_error = on_error
-
 CONMEMORY = ConversationState(MemoryStorage())
-# Create the Bot
 BOT = MyBot(CONMEMORY)
-
 
 # Listen for incoming requests on /api/messages
 async def messages(req: Request) -> Response:
-    # Main bot message handler.
     if "application/json" in req.headers["Content-Type"]:
         body = await req.json()
     else:
@@ -85,7 +74,6 @@ async def init_func(argv):
     APP = web.Application(middlewares=[aiohttp_error_middleware])
     APP.router.add_post("/api/messages", messages)
     return APP
-
 
 if __name__ == "__main__":
     APP = init_func(None)
