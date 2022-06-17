@@ -13,13 +13,14 @@ from botbuilder.core import (
 )
 from botbuilder.core.integration import aiohttp_error_middleware
 from botbuilder.schema import Activity, ActivityTypes
-
+from botbuilder.applicationinsights import ApplicationInsightsTelemetryClient
+from botbuilder.integration.applicationinsights.aiohttp import AiohttpTelemetryProcessor, bot_telemetry_middleware
 from bot import MyBot
 from config import DefaultConfig
 
 CONFIG = DefaultConfig()
-# SETTINGS = BotFrameworkAdapterSettings("","")
-SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
+SETTINGS = BotFrameworkAdapterSettings("","")
+# SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
 ADAPTER = BotFrameworkAdapter(SETTINGS)
 
 async def on_error(context: TurnContext, error: Exception):
@@ -50,7 +51,9 @@ async def on_error(context: TurnContext, error: Exception):
 
 ADAPTER.on_turn_error = on_error
 CONMEMORY = ConversationState(MemoryStorage())
-BOT = MyBot(CONMEMORY)
+TELEMETRY_CLIENT = ApplicationInsightsTelemetryClient(CONFIG.APP_INSIGHT_KEY, telemetry_processor=AiohttpTelemetryProcessor(), client_queue_size=500)
+
+BOT = MyBot(CONMEMORY, TELEMETRY_CLIENT)
 
 # Listen for incoming requests on /api/messages
 async def messages(req: Request) -> Response:
