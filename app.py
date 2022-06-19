@@ -19,8 +19,8 @@ from bot import MyBot
 from config import DefaultConfig
 
 CONFIG = DefaultConfig()
-SETTINGS = BotFrameworkAdapterSettings("","")
-# SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
+# SETTINGS = BotFrameworkAdapterSettings("","")
+SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
 ADAPTER = BotFrameworkAdapter(SETTINGS)
 
 async def on_error(context: TurnContext, error: Exception):
