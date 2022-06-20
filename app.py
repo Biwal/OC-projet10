@@ -1,4 +1,3 @@
-
 import sys
 import traceback
 from datetime import datetime
@@ -7,21 +6,28 @@ from aiohttp import web
 from aiohttp.web import Request, Response, json_response
 from botbuilder.core import (
     BotFrameworkAdapterSettings,
+    UserState,
     TurnContext,
     BotFrameworkAdapter,
-    ConversationState,MemoryStorage,TelemetryLoggerMiddleware
+    ConversationState,
+    MemoryStorage,
+    TelemetryLoggerMiddleware,
 )
 from botbuilder.core.integration import aiohttp_error_middleware
 from botbuilder.schema import Activity, ActivityTypes
 from botbuilder.applicationinsights import ApplicationInsightsTelemetryClient
-from botbuilder.integration.applicationinsights.aiohttp import AiohttpTelemetryProcessor, bot_telemetry_middleware
+from botbuilder.integration.applicationinsights.aiohttp import (
+    AiohttpTelemetryProcessor,
+    bot_telemetry_middleware,
+)
 from bot import MyBot
 from config import DefaultConfig
 
 CONFIG = DefaultConfig()
-# SETTINGS = BotFrameworkAdapterSettings("","")
+# SETTINGS = BotFrameworkAdapterSettings("", "")
 SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
 ADAPTER = BotFrameworkAdapter(SETTINGS)
+
 
 async def on_error(context: TurnContext, error: Exception):
     # This check writes out errors to console log .vs. app insights.
@@ -49,14 +55,24 @@ async def on_error(context: TurnContext, error: Exception):
         # Send a trace activity, which will be displayed in Bot Framework Emulator
         await context.send_activity(trace_activity)
 
-ADAPTER.on_turn_error = on_error
-CONMEMORY = ConversationState(MemoryStorage())
-TELEMETRY_CLIENT = ApplicationInsightsTelemetryClient(CONFIG.APP_INSIGHT_KEY, telemetry_processor=AiohttpTelemetryProcessor(), client_queue_size=500)
 
-TELEMETRY_LOGGER_MIDDLEWARE = TelemetryLoggerMiddleware(telemetry_client=TELEMETRY_CLIENT, log_personal_information=True)
+ADAPTER.on_turn_error = on_error
+
+MEMORY = MemoryStorage()
+CONMEMORY = ConversationState(MEMORY)
+USER_STATE = UserState(MEMORY)
+TELEMETRY_CLIENT = ApplicationInsightsTelemetryClient(
+    CONFIG.APP_INSIGHT_KEY,
+    telemetry_processor=AiohttpTelemetryProcessor(),
+    client_queue_size=500,
+)
+
+TELEMETRY_LOGGER_MIDDLEWARE = TelemetryLoggerMiddleware(
+    telemetry_client=TELEMETRY_CLIENT, log_personal_information=True
+)
 ADAPTER.use(TELEMETRY_LOGGER_MIDDLEWARE)
 
-BOT = MyBot(CONMEMORY, TELEMETRY_CLIENT)
+BOT = MyBot(CONMEMORY, USER_STATE, TELEMETRY_CLIENT)
 # BOT = MyBot(CONMEMORY)
 # Listen for incoming requests on /api/messages
 async def messages(req: Request) -> Response:
@@ -76,10 +92,14 @@ async def messages(req: Request) -> Response:
     except Exception as exception:
         raise exception
 
+
 async def init_func(argv):
-    APP = web.Application(middlewares=[bot_telemetry_middleware,aiohttp_error_middleware])
+    APP = web.Application(
+        middlewares=[bot_telemetry_middleware, aiohttp_error_middleware]
+    )
     APP.router.add_post("/api/messages", messages)
     return APP
+
 
 if __name__ == "__main__":
     APP = init_func(None)
@@ -88,4 +108,3 @@ if __name__ == "__main__":
         web.run_app(APP, host="localhost", port=CONFIG.PORT)
     except Exception as error:
         raise error
-
