@@ -14,6 +14,7 @@ class MyBot(ActivityHandler):
         
         luis_app = LuisApplication(CONFIG.LUIS_ID, CONFIG.LUIS_KEY, CONFIG.BOT_URL)
         luis_option = LuisPredictionOptions(include_all_intents=True, include_instance_data=True)
+        luis_option.telemetry_client = telemetry_client
         self.LuisReg = LuisRecognizer(luis_app, luis_option, True)
         self.con_state = conversation
         self.state_prop = self.con_state.create_property("dialog_set")
