@@ -9,7 +9,7 @@ from config import DefaultConfig
 from Prompts import  AirportsPrompt, DatesPrompt, BudgetPrompt
 
 class MyBot(ActivityHandler):
-    def __init__(self, conversation: ConversationState, telemetry_client: BotTelemetryClient) -> None:
+    def __init__(self, conversation: ConversationState, telemetry_client: BotTelemetryClient=None) -> None:
         CONFIG = DefaultConfig()
         
         luis_app = LuisApplication(CONFIG.LUIS_ID, CONFIG.LUIS_KEY, CONFIG.BOT_URL)

@@ -9,7 +9,7 @@ from botbuilder.core import (
     BotFrameworkAdapterSettings,
     TurnContext,
     BotFrameworkAdapter,
-    ConversationState,MemoryStorage
+    ConversationState,MemoryStorage,TelemetryLoggerMiddleware
 )
 from botbuilder.core.integration import aiohttp_error_middleware
 from botbuilder.schema import Activity, ActivityTypes
@@ -53,8 +53,11 @@ ADAPTER.on_turn_error = on_error
 CONMEMORY = ConversationState(MemoryStorage())
 TELEMETRY_CLIENT = ApplicationInsightsTelemetryClient(CONFIG.APP_INSIGHT_KEY, telemetry_processor=AiohttpTelemetryProcessor(), client_queue_size=500)
 
-BOT = MyBot(CONMEMORY, TELEMETRY_CLIENT)
+TELEMETRY_LOGGER_MIDDLEWARE = TelemetryLoggerMiddleware(telemetry_client=TELEMETRY_CLIENT, log_personal_information=True)
+ADAPTER.use(TELEMETRY_LOGGER_MIDDLEWARE)
 
+BOT = MyBot(CONMEMORY, TELEMETRY_CLIENT)
+# BOT = MyBot(CONMEMORY)
 # Listen for incoming requests on /api/messages
 async def messages(req: Request) -> Response:
     if "application/json" in req.headers["Content-Type"]:
@@ -74,7 +77,7 @@ async def messages(req: Request) -> Response:
         raise exception
 
 async def init_func(argv):
-    APP = web.Application(middlewares=[bot_telemetry_middleware, aiohttp_error_middleware])
+    APP = web.Application(middlewares=[bot_telemetry_middleware,aiohttp_error_middleware])
     APP.router.add_post("/api/messages", messages)
     return APP
 
