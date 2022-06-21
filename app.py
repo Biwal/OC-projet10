@@ -24,8 +24,8 @@ from bot import MyBot
 from config import DefaultConfig
 
 CONFIG = DefaultConfig()
-# SETTINGS = BotFrameworkAdapterSettings("", "")
-SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
+SETTINGS = BotFrameworkAdapterSettings("", "")
+# SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
 ADAPTER = BotFrameworkAdapter(SETTINGS)
 
 
@@ -73,7 +73,6 @@ TELEMETRY_LOGGER_MIDDLEWARE = TelemetryLoggerMiddleware(
 ADAPTER.use(TELEMETRY_LOGGER_MIDDLEWARE)
 
 BOT = MyBot(CONMEMORY, USER_STATE, TELEMETRY_CLIENT)
-# BOT = MyBot(CONMEMORY)
 # Listen for incoming requests on /api/messages
 async def messages(req: Request) -> Response:
     if "application/json" in req.headers["Content-Type"]:

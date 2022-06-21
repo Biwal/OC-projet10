@@ -23,8 +23,8 @@ from botbuilder.dialogs.prompts import (
 from typing import List
 from config import DefaultConfig
 from Prompts import AirportsPrompt, DatesPrompt, BudgetPrompt
-from lib.FlightBookingRecognizer import FlightBookingRecognizer
-from lib.BookingDialog import BookingDialog
+from FlightBookingRecognizer import FlightBookingRecognizer
+# from lib.BookingDialog import BookingDialog
 
 
 class MyBot(ActivityHandler):
@@ -173,5 +173,5 @@ class MyBot(ActivityHandler):
         # )
 
         # Save any state changes that might have occured during the turn.
-        await self.conversation_state.save_changes(turn_context, False)
+        await self.con_state.save_changes(turn_context, False)
         await self.user_state.save_changes(turn_context, False)
