@@ -84,8 +84,10 @@ class AirportsPrompt(BasePrompt):
     async def validate(self,  turn_context:TurnContext) -> PromptRecognizerResult:
         valid_entities = ['or_city', 'dst_city']    
         error_message="I'm sorry I don't understand the departure and/or the arrival city. Could you please re-write your informations?"
-        return await super()._validator(turn_context,valid_entities, error_message)
-    
+        is_valid = await super()._validator(turn_context,valid_entities, error_message)
+        if not is_valid:
+            ...
+        return is_valid
     
 class DatesPrompt(BasePrompt):
     def __init__(self, dialog_id, luis_reg: LuisRecognizer, validator: object = None, defaultLocale=None):

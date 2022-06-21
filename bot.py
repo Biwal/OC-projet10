@@ -26,6 +26,9 @@ from Prompts import AirportsPrompt, DatesPrompt, BudgetPrompt
 from FlightBookingRecognizer import FlightBookingRecognizer
 # from lib.BookingDialog import BookingDialog
 
+import logging
+from opencensus.ext.azure.log_exporter import AzureLogHandler
+
 
 class MyBot(ActivityHandler):
     def __init__(
@@ -66,6 +69,8 @@ class MyBot(ActivityHandler):
         self.dialog_set.add(waterfall_dialog)
         self.dialog_set.telemetry_client = telemetry_client
         self.telemetry = telemetry_client
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(AzureLogHandler(connection_string ="InstrumentationKey=3e7e3d0d-f7bb-497b-b60c-f5695a907970;IngestionEndpoint=https://westeurope-5.in.applicationinsights.azure.com/;LiveEndpoint=https://westeurope.livediagnostics.monitor.azure.com/"))
 
         # self.dialog = BookingDialog('main_dialog', telemetry_client, self.LuisReg)
 
@@ -118,12 +123,16 @@ class MyBot(ActivityHandler):
 
         message = f"Ok, let me summarize ! You want to book a plane from '{or_city}' to '{dst_city}', leaving '{str_date}' and coming back '{end_date}' with a budget of '{budget}'. Do you confirm these data? "
         # message = f'or_city : {or_city} ; dst_city : {dst_city} ; departure: {str_date} ; return : {end_date} ; budget : {budget}'
+        self.logger.warning(f"Validation : {message}")
         return await waterfall_step.prompt(
             "validation_prompt", PromptOptions(prompt=MessageFactory.text(message))
         )
+        
+        
 
     async def is_validated(self, prompt_valid: PromptValidatorContext):
         if prompt_valid.recognized.value == False:
+            self.logger.error("Validation refusé par l'utilisateur")
             await prompt_valid.context.send_activity(
                 "Why did you say no :( ? Please reload me to correctly book your plane !"
             )

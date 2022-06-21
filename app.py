@@ -63,7 +63,7 @@ MEMORY = MemoryStorage()
 CONMEMORY = ConversationState(MEMORY)
 USER_STATE = UserState(MEMORY)
 TELEMETRY_CLIENT = ApplicationInsightsTelemetryClient(
-    CONFIG.APP_INSIGHT_KEY,
+    "InstrumentationKey=3e7e3d0d-f7bb-497b-b60c-f5695a907970;IngestionEndpoint=https://westeurope-5.in.applicationinsights.azure.com/;LiveEndpoint=https://westeurope.livediagnostics.monitor.azure.com/",
     telemetry_processor=AiohttpTelemetryProcessor(),
     client_queue_size=500,
 )
