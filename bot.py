@@ -149,8 +149,8 @@ class MyBot(ActivityHandler):
         else:
             await dialog_context.begin_dialog("main_dialog")
 
-        await self.con_state.save_changes(turn_context)
-
+        await self.con_state.save_changes(turn_context) 
+        await self.user_state.save_changes(turn_context)
     def _get_entity_value(self, entities, key):
         for entity in entities:
             if entity.type == key:
