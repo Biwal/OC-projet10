@@ -22,12 +22,20 @@ from botbuilder.integration.applicationinsights.aiohttp import (
 )
 from bot import MyBot
 from config import DefaultConfig
+import logging
+from opencensus.ext.azure.log_exporter import AzureLogHandler
+
 
 CONFIG = DefaultConfig()
 # SETTINGS = BotFrameworkAdapterSettings("", "")
 SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
 ADAPTER = BotFrameworkAdapter(SETTINGS)
 
+logger = logging.getLogger(__name__)
+
+logger.addHandler(AzureLogHandler(
+    connection_string= "InstrumentationKey=3e7e3d0d-f7bb-497b-b60c-f5695a907970;IngestionEndpoint=https://westeurope-5.in.applicationinsights.azure.com/;LiveEndpoint=https://westeurope.livediagnostics.monitor.azure.com/")
+)
 
 
 async def on_error(context: TurnContext, error: Exception):
@@ -105,6 +113,8 @@ if __name__ == "__main__":
     APP = init_func(None)
 
     try:
+        logger.setLevel(logging.DEBUG)
+        logger.info('Application started correctly.')
         web.run_app(APP, host="localhost", port=CONFIG.PORT)
     except Exception as error:
         raise error

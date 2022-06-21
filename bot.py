@@ -75,6 +75,8 @@ class MyBot(ActivityHandler):
         # self.dialog = BookingDialog('main_dialog', telemetry_client, self.LuisReg)
 
     async def airports(self, waterfall_step: WaterfallStepContext):
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.info('Dialog started correctly')
         await waterfall_step._turn_context.send_activity(
             f"Welcome to the flight booking bot. I was built to help you to book your round-trip ticket.\n I will ask you some informations to complete your request then i can proceed. I hope our interraction will going well ! "
         )
