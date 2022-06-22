@@ -28,8 +28,8 @@ from opencensus.ext.azure.log_exporter import AzureLogHandler
 
 
 CONFIG = DefaultConfig()
-SETTINGS = BotFrameworkAdapterSettings("", "")
-# SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
+# SETTINGS = BotFrameworkAdapterSettings("", "")
+SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
 ADAPTER = BotFrameworkAdapter(SETTINGS)
 
 logger = logging.getLogger(__name__)
