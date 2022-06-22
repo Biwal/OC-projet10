@@ -23,6 +23,7 @@ from botbuilder.integration.applicationinsights.aiohttp import (
 from bot import MyBot
 from config import DefaultConfig
 import logging
+from BookingDialog import BookingDialog
 from opencensus.ext.azure.log_exporter import AzureLogHandler
 
 
@@ -71,17 +72,20 @@ MEMORY = MemoryStorage()
 CONMEMORY = ConversationState(MEMORY)
 USER_STATE = UserState(MEMORY)
 TELEMETRY_CLIENT = ApplicationInsightsTelemetryClient(
-    "InstrumentationKey=3e7e3d0d-f7bb-497b-b60c-f5695a907970;IngestionEndpoint=https://westeurope-5.in.applicationinsights.azure.com/;LiveEndpoint=https://westeurope.livediagnostics.monitor.azure.com/",
+    "3e7e3d0d-f7bb-497b-b60c-f5695a90797",
     telemetry_processor=AiohttpTelemetryProcessor(),
     client_queue_size=500,
 )
-
 TELEMETRY_LOGGER_MIDDLEWARE = TelemetryLoggerMiddleware(
     telemetry_client=TELEMETRY_CLIENT, log_personal_information=True
 )
 ADAPTER.use(TELEMETRY_LOGGER_MIDDLEWARE)
 
-BOT = MyBot(CONMEMORY, USER_STATE, TELEMETRY_CLIENT)
+DIALOG = BookingDialog(telemetry_client=TELEMETRY_CLIENT, con_state=CONMEMORY)
+TELEMETRY_CLIENT.main_dialog = DIALOG
+# DIALOG.add()
+
+BOT = MyBot(CONMEMORY, USER_STATE, TELEMETRY_CLIENT, DIALOG)
 # Listen for incoming requests on /api/messages
 async def messages(req: Request) -> Response:
     if "application/json" in req.headers["Content-Type"]:

@@ -1,5 +1,6 @@
 aiohttp
 opencensus-ext-azure
+datatypes_date_time
 botbuilder-ai>=4.14.2
 botbuilder-integration-aiohttp>=4.14.2
 botbuilder-dialogs>=4.14.2

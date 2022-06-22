@@ -1,3 +1,4 @@
+from pickle import TRUE
 from botbuilder.ai.luis import LuisApplication, LuisRecognizer, LuisPredictionOptions
 from botbuilder.core import (
     Recognizer,
@@ -11,7 +12,9 @@ from config import DefaultConfig
 
 
 class FlightBookingRecognizer(Recognizer):
-    def __init__(self, telemetry_client: BotTelemetryClient) -> None:
+    def __init__(
+        self, telemetry_client: BotTelemetryClient = NullTelemetryClient()
+    ) -> None:
         super().__init__()
         configuration = DefaultConfig()
         luis_app = LuisApplication(
@@ -22,7 +25,7 @@ class FlightBookingRecognizer(Recognizer):
             include_instance_data=True,
             telemetry_client=telemetry_client,
         )
-        self._recognizer = LuisRecognizer(luis_app, luis_options, True)
+        self._recognizer = LuisRecognizer(luis_app, luis_options, TRUE)
 
     async def recognize(self, turn_context: TurnContext) -> RecognizerResult:
         return await self._recognizer.recognize(turn_context)
