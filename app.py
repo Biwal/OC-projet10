@@ -28,8 +28,8 @@ from opencensus.ext.azure.log_exporter import AzureLogHandler
 
 
 CONFIG = DefaultConfig()
-# SETTINGS = BotFrameworkAdapterSettings("", "")
-SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
+SETTINGS = BotFrameworkAdapterSettings("", "")
+# SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
 ADAPTER = BotFrameworkAdapter(SETTINGS)
 
 logger = logging.getLogger(__name__)
@@ -72,9 +72,9 @@ MEMORY = MemoryStorage()
 CONMEMORY = ConversationState(MEMORY)
 USER_STATE = UserState(MEMORY)
 TELEMETRY_CLIENT = ApplicationInsightsTelemetryClient(
-    "3e7e3d0d-f7bb-497b-b60c-f5695a90797",
+    "3e7e3d0d-f7bb-497b-b60c-f5695a907970",
     telemetry_processor=AiohttpTelemetryProcessor(),
-    client_queue_size=500,
+    client_queue_size=10,
 )
 TELEMETRY_LOGGER_MIDDLEWARE = TelemetryLoggerMiddleware(
     telemetry_client=TELEMETRY_CLIENT, log_personal_information=True
