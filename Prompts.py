@@ -79,7 +79,7 @@ class BasePrompt(Prompt):
         return prompt_result
 
     def send_telemetry_event(self, prev_message:str):
-        self.telemetry_client.track_event("Entity Unrecognized", {"text": prev_message})
+        self.telemetry_client.track_event("EntityUnrecognized", {"text": prev_message})
 
 
 class AirportsPrompt(BasePrompt):
