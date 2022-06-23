@@ -1,12 +1,13 @@
 from botbuilder.dialogs.prompts import Prompt, PromptOptions, PromptRecognizerResult
 from botbuilder.core.turn_context import TurnContext
 from botbuilder.schema import ActivityTypes
+from botbuilder.core import BotTelemetryClient, NullTelemetryClient
 from botbuilder.ai.luis import LuisRecognizer
 from recognizers_text import Culture
 
 from typing import Dict, List
 from abc import abstractmethod
-
+from utils import  check_all_entities_in
 
 class BasePrompt(Prompt):
     def __init__(
@@ -14,7 +15,8 @@ class BasePrompt(Prompt):
         dialog_id,
         luis_reg: LuisRecognizer,
         validator: object = None,
-        defaultLocale=None,
+        defaultLocale=None, telemetry_client: BotTelemetryClient = NullTelemetryClient()
+        # telemetry: BotTelemetryClient = NullTelemetryClient()
     ):
         super().__init__(dialog_id, validator=validator)
 
@@ -23,6 +25,7 @@ class BasePrompt(Prompt):
 
         self._defaultLocale = defaultLocale
         self._luis_reg = luis_reg
+        self.telemetry_client = telemetry_client
 
     async def on_prompt(
         self,
@@ -60,10 +63,7 @@ class BasePrompt(Prompt):
     async def validate(self, userText, turn_context) -> PromptRecognizerResult:
         ...
 
-    def _get_entity_value(self, entities, key):
-        for entity in entities:
-            if entity.type == key:
-                return entity.entity
+
 
     async def _validator(
         self, turn_context: TurnContext, valid_entities: List[str], error_message: str
@@ -71,10 +71,10 @@ class BasePrompt(Prompt):
         prompt_result = PromptRecognizerResult()
 
         luis_result = await self._luis_reg.recognize(turn_context)
-        result = luis_result.properties["luisResult"]
-        entities_type = [entity.type for entity in result.entities]
+        entities = luis_result.properties["luisResult"].entities
+        
 
-        if all([valid_entity in entities_type for valid_entity in valid_entities]):
+        if check_all_entities_in(valid_entities, entities):
             prompt_result.succeeded = True
         else:
             await turn_context.send_activity(error_message)
@@ -87,16 +87,16 @@ class AirportsPrompt(BasePrompt):
         dialog_id,
         luis_reg: LuisRecognizer,
         validator: object = None,
-        defaultLocale=None,
+        defaultLocale=None, telemetry_client: BotTelemetryClient = NullTelemetryClient()
     ):
-        super().__init__(dialog_id, luis_reg, validator, defaultLocale)
+        super().__init__(dialog_id, luis_reg, validator, defaultLocale, telemetry_client)
+        
 
     async def validate(self, turn_context: TurnContext) -> PromptRecognizerResult:
         valid_entities = ["or_city", "dst_city"]
         error_message = "I'm sorry I don't understand the departure and/or the arrival city. Could you please re-write your informations?"
         is_valid = await super()._validator(turn_context, valid_entities, error_message)
-        if not is_valid:
-            ...
+
         return is_valid
 
 
@@ -106,9 +106,9 @@ class DatesPrompt(BasePrompt):
         dialog_id,
         luis_reg: LuisRecognizer,
         validator: object = None,
-        defaultLocale=None,
+        defaultLocale=None, telemetry_client: BotTelemetryClient = NullTelemetryClient()
     ):
-        super().__init__(dialog_id, luis_reg, validator, defaultLocale)
+        super().__init__(dialog_id, luis_reg, validator, defaultLocale, telemetry_client)
 
     async def validate(self, turn_context) -> PromptRecognizerResult:
         valid_entities = ["str_date", "end_date"]
@@ -122,9 +122,9 @@ class BudgetPrompt(BasePrompt):
         dialog_id,
         luis_reg: LuisRecognizer,
         validator: object = None,
-        defaultLocale=None,
+        defaultLocale=None, telemetry_client: BotTelemetryClient = NullTelemetryClient()
     ):
-        super().__init__(dialog_id, luis_reg, validator, defaultLocale)
+        super().__init__(dialog_id, luis_reg, validator, defaultLocale, telemetry_client)
 
     async def validate(self, turn_context) -> PromptRecognizerResult:
         valid_entities = ["budget"]

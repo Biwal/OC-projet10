@@ -9,7 +9,7 @@ from botbuilder.dialogs.prompts import ConfirmPrompt, PromptOptions
 from botbuilder.core import MessageFactory, BotTelemetryClient, NullTelemetryClient
 from FlightBookingRecognizer import FlightBookingRecognizer
 from Prompts import AirportsPrompt, DatesPrompt, BudgetPrompt
-
+from utils import get_entity_value
 
 class BookingDialog(ComponentDialog):
     """Flight booking implementation."""
@@ -129,9 +129,5 @@ class BookingDialog(ComponentDialog):
         result = luis_result.properties["luisResult"]
         entities = result.entities
         for entity in entities_to_save:
-            waterfall_step.values[entity] = self._get_entity_value(entities, entity)
+            waterfall_step.values[entity] = get_entity_value(entities, entity)
 
-    def _get_entity_value(self, entities, key):
-        for entity in entities:
-            if entity.type == key:
-                return entity.entity
