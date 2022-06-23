@@ -83,7 +83,6 @@ ADAPTER.use(TELEMETRY_LOGGER_MIDDLEWARE)
 
 DIALOG = BookingDialog(telemetry_client=TELEMETRY_CLIENT, con_state=CONMEMORY)
 TELEMETRY_CLIENT.main_dialog = DIALOG
-# DIALOG.add()
 
 BOT = MyBot(CONMEMORY, USER_STATE, TELEMETRY_CLIENT, DIALOG)
 # Listen for incoming requests on /api/messages
