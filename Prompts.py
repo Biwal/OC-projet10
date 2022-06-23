@@ -78,7 +78,7 @@ class BasePrompt(Prompt):
             await turn_context.send_activity(error_message)
         return prompt_result
 
-    def send_telemetry_event(self, prev_message):
+    def send_telemetry_event(self, prev_message:str):
         self.telemetry_client.track_event("Entity Unrecognized", {"text": prev_message})
 
 
@@ -92,7 +92,7 @@ class AirportsPrompt(BasePrompt):
         telemetry_client: BotTelemetryClient = NullTelemetryClient(),
     ):
         super().__init__(
-            dialog_id, luis_reg, validator, defaultLocale, telemetry_client
+            dialog_id, luis_reg, validator, defaultLocale
         )
 
     async def validate(self, turn_context: TurnContext) -> PromptRecognizerResult:

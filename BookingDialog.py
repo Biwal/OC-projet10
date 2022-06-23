@@ -26,15 +26,15 @@ class BookingDialog(ComponentDialog):
         self._dialogs = DialogSet(con_state.create_property("dialog_set"))
         self.initial_dialog_id = "main_dialog"
 
-        airports_prompt = AirportsPrompt("airports_prompt", self._recognizer)
+        airports_prompt = AirportsPrompt("airports_prompt", self._recognizer, telemetry_client= self.telemetry_client)
         airports_prompt.telemetry_client = telemetry_client
         self._dialogs.add(airports_prompt)
 
-        dates_prompt = DatesPrompt("dates_prompt", self._recognizer)
+        dates_prompt = DatesPrompt("dates_prompt", self._recognizer, telemetry_client=self.telemetry_client)
         dates_prompt.telemetry_client = telemetry_client
         self._dialogs.add(dates_prompt)
 
-        budget_prompt = BudgetPrompt("budget_prompt", self._recognizer)
+        budget_prompt = BudgetPrompt("budget_prompt", self._recognizer, telemetry_client= self.telemetry_client)
         budget_prompt.telemetry_client = telemetry_client
         self._dialogs.add(budget_prompt)
 
